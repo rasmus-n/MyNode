@@ -1,0 +1,12 @@
+{
+  "name": "MyNode",
+  "version": "0.0.1",
+
+  "dependencies": [
+    {
+      "owner"   : "knolleary",
+      "name"    : "PubSubClient",
+      "version" : "^2.8"
+    }
+  ]
+}
