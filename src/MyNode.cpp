@@ -16,6 +16,9 @@ std::vector<cMQTTHandler> mHandlers{};
 
 MyNode myNode;
 
+bool mConfigNodeStarted = false;
+unsigned long mConfigNodeTimeOut;
+
 MyNode::MyNode()
 {
 }
@@ -74,12 +77,17 @@ void MyNode::setup()
 
 void MyNode::loop()
 {
-  static long int lastMQTTReconnect = 0;
-  long int now = millis();
+  static unsigned long lastMQTTReconnect = 0;
+  unsigned long now = millis();
 
-  if (mConfigured && !mMqtt.connected() && ((now - lastMQTTReconnect) > 5000)) {
+  if (mConfigured && !mMqtt.connected() && ((now - lastMQTTReconnect) > 5000) && (mConfigNodeStarted == false)) {
     reconnect();
     lastMQTTReconnect = now;
+  }
+
+  if (mConfigNodeStarted && (now > mConfigNodeTimeOut))
+  {
+    ESP.restart();
   }
 
   ArduinoOTA.handle();
@@ -155,6 +163,8 @@ void MyNode::publish_retain(const char* topic, int payload)
 
 void MyNode::ConfigNode()
 {
+  mConfigNodeTimeOut = millis() + 10*60000;
+  mConfigNodeStarted = true;
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
   mPref.begin("cfg");
 
@@ -200,6 +210,7 @@ void mqtt_callback(const char* topic, uint8_t* payload, unsigned int length)
 static esp_err_t cmd_handler(httpd_req_t *req)
 {
   Serial.println("set");
+  mConfigNodeTimeOut = millis() + 10*60000;
 
   char*  buf;
   size_t buf_len;
@@ -257,6 +268,7 @@ static esp_err_t cmd_handler(httpd_req_t *req)
 static esp_err_t root_handler(httpd_req_t *req)
 {
   Serial.println("root");
+  mConfigNodeTimeOut = millis() + 10*60000;
   char response[512];
   char* p = response;
   

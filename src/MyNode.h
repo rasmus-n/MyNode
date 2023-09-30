@@ -23,9 +23,9 @@ public:
 
   void setup();
   void loop();
+  void ConfigNode();
 
 private:
-  void ConfigNode();
   void reconnect();
 
   bool mConfigured = false;
